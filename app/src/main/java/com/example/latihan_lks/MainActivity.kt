@@ -3,6 +3,7 @@ package com.example.latihan_lks
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.widget.SearchView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -19,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: MovieAdapter
     private val movieList = mutableListOf<Movie>()
+    private val filteredMovieList = mutableListOf<Movie>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,17 +35,25 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = MovieAdapter(
-            movieList
-        ) {
-            movie -> onListItemClick(movie)
-        }
-
+        adapter = MovieAdapter(filteredMovieList) { movie -> onListItemClick(movie) }
         recyclerView.adapter = adapter
+
+        val searchView = findViewById<SearchView>(R.id.searchView)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                filterMovies(newText)
+                return true
+            }
+        })
 
         fetchMovies()
     }
-    fun onListItemClick(item:Movie){
+
+    private fun onListItemClick(item: Movie) {
         val intent = Intent(this, DetailActivity::class.java)
         intent.putExtra("extra_item", item)
         startActivity(intent)
@@ -74,6 +84,7 @@ class MainActivity : AppCompatActivity() {
                         )
                         movieList.add(movie)
                     }
+                    filteredMovieList.addAll(movieList)
 
                     runOnUiThread { adapter.notifyDataSetChanged() }
                 }
@@ -81,5 +92,17 @@ class MainActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun filterMovies(query: String?) {
+        val filteredList = if (query.isNullOrEmpty()) {
+            movieList
+        } else {
+            movieList.filter { it.title.contains(query, true) }
+        }
+        filteredMovieList.clear()
+        filteredMovieList.addAll(filteredList)
+        adapter.notifyDataSetChanged()
     }
 }
