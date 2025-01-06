@@ -17,34 +17,27 @@ class DetailActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
 
-        val movie = intent.getParcelableExtra<Movie>("extra_item")
-
-        findViewById<TextView>(R.id.detailTitle).text = movie?.title
-        findViewById<TextView>(R.id.detailGenre).text = "Genre: ${movie?.genre}"
-        findViewById<TextView>(R.id.detailDescription).text = movie?.description
-        findViewById<TextView>(R.id.detailReleaseDate).text = "Release Date: ${movie?.releaseDate}"
-        LoadImageTask(findViewById(R.id.detailPoster)).execute(movie?.image)
+        intent.getParcelableExtra<Movie>("extra_item")?.let { movie ->
+            findViewById<TextView>(R.id.detailTitle).text = movie.title
+            findViewById<TextView>(R.id.detailGenre).text = "Genre: ${movie.genre}"
+            findViewById<TextView>(R.id.detailDescription).text = movie.description
+            findViewById<TextView>(R.id.detailReleaseDate).text = "Release Date: ${movie.releaseDate}"
+            LoadImageTask(findViewById(R.id.detailPoster)).execute(movie.image)
+        }
     }
 
     companion object {
-        private const val MOVIE_KEY = "MOVIE_KEY"
-
-        fun newIntent(context: Context, movie: Movie): Intent {
-            return Intent(context, DetailActivity::class.java).apply {
-                putExtra(MOVIE_KEY, movie)
-            }
+        fun newIntent(context: Context, movie: Movie) = Intent(context, DetailActivity::class.java).apply {
+            putExtra("MOVIE_KEY", movie)
         }
     }
 
     private class LoadImageTask(val imageView: ImageView) : AsyncTask<String, Void, Bitmap?>() {
-        override fun doInBackground(vararg params: String?): Bitmap? {
-            return try {
-                val url = URL(params[0])
-                BitmapFactory.decodeStream(url.openConnection().getInputStream())
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
+        override fun doInBackground(vararg params: String?) = try {
+            BitmapFactory.decodeStream(URL(params[0]).openConnection().getInputStream())
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
 
         override fun onPostExecute(result: Bitmap?) {
